@@ -1,0 +1,6 @@
+### Required config
+
+- `STRIPE_SECRET_KEY`:
+- `STRIPE_PUBLIC_KEY`:
+- `ORACLE_ACCOUNT_ID`:
+- `ORACLE_SECRET_KEY`:
