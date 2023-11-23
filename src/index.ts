@@ -35,7 +35,7 @@ app.post(
       currency: "usd",
       description: description,
       payment_method_types: ["card"],
-      metadata: { action },
+      metadata: { action: JSON.stringify(action) },
     });
     console.log(`Created payment intent: ${paymentIntent.id}`);
 
@@ -45,9 +45,9 @@ app.post(
 
 app.post(
   "/stripe-webhook",
-  express.text(),
+  express.text({ type: "*/*" }),
   async (req: Request, res: Response) => {
-    console.log(`Received webhook POST: ${JSON.stringify(req.body)}`);
+    console.log(`Received webhook POST: ${req.body}`);
 
     const actor = await config.getActorAccount();
     console.log(`Actor account OK`);
@@ -70,13 +70,17 @@ app.post(
     console.log(`Event constructed`);
 
     switch (event.type) {
-      case "charge.succeeded":
+      // case "charge.succeeded":
+      case "payment_intent.succeeded":
         // FIXME: verify that we are not spending more NEAR/USDC than what we
         // got from stripe
         // TODO: take a cut
         // TODO: verify the payload
         // @ts-ignore
-        await execute({ account: actor }, event.data.object.metadata.action);
+        await execute(
+          { account: actor },
+          JSON.parse(event.data.object.metadata.action)
+        );
         console.log(`Success event processed`);
         break;
       default:
