@@ -43,15 +43,15 @@ function readEnvVar(name: string): string {
 
 export const config = (() => {
   const stripeSecretKey = readEnvVar("STRIPE_SECRET_KEY");
-  const stripeWebhookSecretKey = readEnvVar("STRIPE_WEBHOOK_SECRET_KEY");
+  const stripeWebhookSecret = readEnvVar("STRIPE_WEBHOOK_SECRET");
   const actorAccountId = readEnvVar("ACTOR_ACCOUNT_ID");
   const actorSecretKey = readEnvVar("ACTOR_SECRET_KEY");
-  const nearNetwork = readEnvVar("NETWORK");
+  const nearNetwork = readEnvVar("NEAR_NETWORK");
 
   return {
     port: parseInt(portEnv),
     stripe: new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" }),
-    stripeWebhookSecretKey,
+    stripeWebhookSecret,
     getActorAccount: async () =>
       connect(actorAccountId, actorSecretKey, nearNetwork),
   };
