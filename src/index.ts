@@ -1,10 +1,12 @@
 import express, { Express, Request, Response } from "express";
 import { createHash } from "crypto";
+import cors from "cors";
 import { execute } from "@mintbase-js/sdk";
 
 import config from "./config";
 
 const app: Express = express();
+app.use(cors());
 
 app.get("/health", (_: Request, res: Response) => {
   res.status(200).send("Service is healthy");
