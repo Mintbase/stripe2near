@@ -32,10 +32,16 @@ export async function postPaymentIntent(req: Request, res: Response) {
 
   // verify that we are not spending more NEAR/USDC than we charge via Stripe
   const cost = await calculateCostUsdcents(action);
-  if (cost > priceUsd * 0.9) {
+  // TODO: 85% might suggest we are taking a 15% cut, which would be way too high
+  // current implementation: Stripe takes ~5%, we take 5%, 5% security margin
+  //   for price fluctuations
+  // better idea: remove security margin, lower own cut, fix cost calculation
+  //   when creating the payment intent and reuse possibly outdated prices when
+  //   dispatching
+  if (cost > priceUsd * 0.85) {
     res
       .status(400)
-      .send("priceUsd * 0.9 must be sufficient to cover transaction costs");
+      .send("priceUsd * 0.85 must be sufficient to cover transaction costs");
     return;
   }
 

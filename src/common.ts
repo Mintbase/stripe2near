@@ -39,10 +39,13 @@ function getBn(x: string | BN): BN {
 
 /// Calculates the cost of a contract call in $USD cents.
 export async function calculateCostUsdcents(
-  call: MintbaseContractCall
+  call: MintbaseContractCall,
+  nearPrice?: string,
+  gasPrice?: string
 ): Promise<number> {
-  const nearCost = await calculateCostNear(call);
-  const { data: nearPrice } = await mbjsData.nearPrice();
+  const nearCost = await calculateCostNear(call, gasPrice);
+  if (!nearPrice) nearPrice = await getNearPrice();
+  //
 
   const cost = nearCost
     .muln(parseFloat(nearPrice as string))
@@ -53,20 +56,28 @@ export async function calculateCostUsdcents(
 }
 
 /// Calculates cost of a contract call in $NEAR.
-async function calculateCostNear(call: MintbaseContractCall): Promise<BN> {
+async function calculateCostNear(
+  call: MintbaseContractCall,
+  gasPrice?: string
+): Promise<BN> {
+  if (!gasPrice) gasPrice = await getGasPrice();
+
   const deposit = getBn(call.deposit);
   const gasUnconverted = getBn(call.gas);
-
-  const gas = await convertGas(gasUnconverted);
+  const gas = gasUnconverted.mul(new BN(gasPrice)).muln(1.05);
 
   return deposit.add(gas);
 }
 
-/// Converts a gas cost to cost in $NEAR, adds 2% in case the gas price is
-/// currently rising steeply.
-async function convertGas(gasUnconverted: BN): Promise<BN> {
+async function getNearPrice(): Promise<string> {
+  const { data: nearPrice, error } = await mbjsData.nearPrice();
+  if (error) throw error;
+  return nearPrice as string;
+}
+
+async function getGasPrice(): Promise<string> {
   const near = await config.getNearConnector();
   // TODO: replace with mbjs once mbjs is fixed
   const block = await near.connection.provider.block({ finality: "final" });
-  return gasUnconverted.mul(new BN(block.header.gas_price)).muln(1.03);
+  return block.header.gas_price;
 }
