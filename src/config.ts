@@ -1,7 +1,9 @@
 import dotenv from "dotenv";
+import * as nearAPI from "near-api-js";
 import { Account, InMemorySigner, KeyPair } from "near-api-js";
 import { InMemoryKeyStore } from "near-api-js/lib/key_stores";
 import { JsonRpcProvider } from "near-api-js/lib/providers";
+import { mbjs } from "@mintbase-js/sdk";
 import Stripe from "stripe";
 
 dotenv.config();
@@ -48,12 +50,20 @@ export const config = (() => {
   const actorSecretKey = readEnvVar("ACTOR_SECRET_KEY");
   const nearNetwork = readEnvVar("NEAR_NETWORK");
 
+  mbjs.config({ network: nearNetwork });
+
   return {
     port: parseInt(portEnv),
     stripe: new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" }),
     stripeWebhookSecret,
     getActorAccount: async () =>
       connect(actorAccountId, actorSecretKey, nearNetwork),
+    // TODO: can get rid of this if we use mbjs for fetching gas price
+    getNearConnector: async () =>
+      nearAPI.connect({
+        networkId: nearNetwork,
+        nodeUrl: `https://rpc.${nearNetwork}.near.org`,
+      }),
   };
 })();
 export default config;
